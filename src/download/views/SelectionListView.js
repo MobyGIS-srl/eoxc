@@ -63,6 +63,11 @@ const SelectionListView = Marionette.CompositeView.extend({
     layerModel.trigger('download-full-resolution', layerModel);
   },
 
+  onDownloadReportClick() {
+    const layerModel = this.model.get('layerModel');
+    layerModel.trigger('download-report', layerModel);
+  },
+
   onProcessingClick() {
     this.model.trigger('start-processing', this.model);
   },

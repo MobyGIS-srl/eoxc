@@ -171,6 +171,79 @@ function getCoverageKVP(coverageid, options = {}) {
     .join('&');
 }
 
+function getReportKVP(coverageid, options = {}) {
+  const params = [
+    ['service', 'WCS'],
+    ['version', '2.0.1'],
+    ['request', 'GetReport'],
+    ['coverageid', coverageid],
+  ];
+
+  const subsetCRS = options.subsetCRS || 'http://www.opengis.net/def/crs/EPSG/0/4326';
+
+  if (options.format) {
+    params.push(['format', options.format]);
+  }
+
+  let axisNames;
+  if (!options.axisNames) {
+    axisNames = {
+      x: 'x',
+      y: 'y',
+    };
+  } else if (Array.isArray(options.axisNames)) {
+    axisNames = {
+      x: options.axisNames[0],
+      y: options.axisNames[1],
+    };
+  } else {
+    axisNames = options.axisNames;
+  }
+
+  let subsetX = options.subsetX;
+  let subsetY = options.subsetY;
+  if (options.bbox && !options.subsetX && !options.subsetY) {
+    subsetX = [options.bbox[0], options.bbox[2]];
+    subsetY = [options.bbox[1], options.bbox[3]];
+  }
+  if (subsetX) {
+    params.push(['subset', `${axisNames.x || 'x'}(${subsetX[0]},${subsetX[1]})`]);
+  }
+  if (subsetY) {
+    params.push(['subset', `${axisNames.y || 'y'}(${subsetY[0]},${subsetY[1]})`]);
+  }
+
+  if (options.outputCRS) {
+    params.push(['outputCRS', options.outputCRS]);
+  }
+  if (subsetCRS && (subsetX || subsetY)) {
+    params.push(['subsettingCRS', subsetCRS]);
+  }
+  if (options.multipart) {
+    params.push(['mediatype', 'multipart/related']);
+  }
+
+  if (options.rangeSubset) {
+    params.push(['rangesubset', options.rangeSubset.join(',')]);
+  }
+
+  // scaling related stuff
+  if (options.scale) {
+    params.push(['scaleFactor', options.scale]);
+  }
+  if (options.sizeX && options.sizeY) {
+    params.push(['scaleSize', `${axisNames.x}(${options.sizeX}),${axisNames.y}(${options.sizeY})`]);
+  }
+
+  if (options.interpolation) {
+    params.push(['interpolation', options.interpolation]);
+  }
+
+  return params
+    .map(param => param.join('='))
+    .join('&');
+}
+
 function getIntersectingBbox(r1, r2) {
   // computes intersection bbox of two bboxes, returns false if no intersect
   // does not find intersection if any bbox crosses dateline and non-over 180 coordinates are used
@@ -254,6 +327,56 @@ export function getDownloadInfos(layerModel, filtersModel, recordModel, options 
 }
 
 export function downloadFullResolution(layerModel, mapModel, filtersModel, options) {
+  const requestOptions = {
+    bbox: options.bbox || mapModel.get('bbox'),
+    outputCRS: options.outputCRS,
+    subsetCRS: options.subsetCRS,
+    rangeSubset: options.fields,
+    format: options.format,
+    scale: options.scale,
+    sizeX: options.sizeX,
+    sizeY: options.sizeY,
+    interpolation: options.interpolation,
+    axisNames: layerModel.get('fullResolution.axisNames'),
+  };
+  let id = layerModel.get('fullResolution.id');
+  /// SH specific ///
+  if (layerModel.get('fullResolution.disableTimeSubsetting') && mapModel.get('time').length === 2) {
+    // need to add __%Y%m%d to ID for current config
+    // TODO: make this a configurable template
+    const formattedTime = getDateString(mapModel.get('time')[1]);
+    id += `__${formattedTime}`;
+  }
+  //////////////////
+  let kvp = getReportKVP(id, requestOptions);
+
+
+  const time = mapModel.get('time');
+  if (time && !layerModel.get('fullResolution.disableTimeSubsetting')) {
+    kvp = `${kvp}&subset=http://www.opengis.net/def/axis/OGC/0/time("${getISODateTimeString(time[0])}","${getISODateTimeString(time[1])}")`;
+  }
+
+  const cqlMapping = layerModel.get('fullResolution.cqlMapping');
+  const cqlParameterName = layerModel.get('fullResolution.cqlParameterName');
+
+  if (cqlParameterName) {
+    const filtersModelCopy = new FiltersModel(filtersModel.attributes);
+    const cql = filtersToCQL(filtersModelCopy, cqlMapping);
+    if (cql.length) {
+      kvp = `${kvp}&${cqlParameterName}=${cql}`;
+    }
+  }
+  const fullResolutionUrl = layerModel.get('fullResolution.url');
+
+  let char = '?';
+  if (fullResolutionUrl.includes('?')) {
+    char = (fullResolutionUrl.endsWith('?') || fullResolutionUrl.endsWith('&')) ? '' : '&';
+  }
+  return `${fullResolutionUrl}${char}${kvp}`;
+}
+
+
+export function downloadReport(layerModel, mapModel, filtersModel, options) {
   const requestOptions = {
     bbox: options.bbox || mapModel.get('bbox'),
     outputCRS: options.outputCRS,
