@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { saveAs } from 'file-saver';
 
-import { download as downloadEOWCS, getDownloadInfos as getDownloadInfosEOWCS, downloadFullResolution } from './eowcs';
+import { download as downloadEOWCS, getDownloadInfos as getDownloadInfosEOWCS, downloadFullResolution, downloadReport } from './eowcs';
 import { getDownloadInfos as getDownloadInfosUrl } from './url';
 import { getDownloadInfos as getDownloadInfosS3 } from './s3';
 import rewrite from './rewrite';
@@ -82,6 +82,11 @@ export function downloadRecord(layerModel, filtersModel, recordModel, options) {
 
 export function downloadFullResolutionWCS(layerModel, mapModel, filtersModel, options) {
   const url = downloadFullResolution(layerModel, mapModel, filtersModel, options);
+  downloadUrl(rewrite(url, layerModel.get('download.rewrite')));
+}
+
+export function downloadReportWCS(layerModel, mapModel, filtersModel, options) {
+  const url = downloadReport(layerModel, mapModel, filtersModel, options);
   downloadUrl(rewrite(url, layerModel.get('download.rewrite')));
 }
 

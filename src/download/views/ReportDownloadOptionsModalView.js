@@ -8,7 +8,7 @@ import ModalView from '../../core/views/ModalView';
 import template from './ReportDownloadOptionsModalView.hbs';
 import './DownloadOptionsModalView.css';
 
-import { downloadFullResolutionWCS } from '../../download';
+import { downloadReportWCS } from '../../download';
 
 export default ModalView.extend({
   template,
@@ -282,7 +282,7 @@ export default ModalView.extend({
       default:
         break;
     }
-    downloadFullResolutionWCS(this.layerModel, this.mapModel, this.filtersModel, options);
+    downloadReportWCS(this.layerModel, this.mapModel, this.filtersModel, options);
   },
 
   onDrawBBoxClicked() {

@@ -20,7 +20,7 @@ const LayerListItemView = Marionette.ItemView.extend(/** @lends core/views/layer
     'inserted.bs.popover': 'onPopoverInserted',
     'hidden.bs.popover': 'onPopoverHidden',
     'click .layer-download-full-resolution': 'onLayerDownloadFullResolutionClick',
-    'click .layer-download-report': 'onLayerDownloadFullResolutionClick',
+    'click .layer-download-report': 'onLayerDownloadReportClick',
 
     // when using options
     'click .layer-show-options': 'onShowOptionsClick',
@@ -68,10 +68,12 @@ const LayerListItemView = Marionette.ItemView.extend(/** @lends core/views/layer
   },
 
   onLayerDownloadFullResolutionClick() {
+    // document.write("<h1>download-full-resolution</h1>");
     this.model.trigger('download-full-resolution', this.model);
   },
 
   onLayerDownloadReportClick() {
+    // document.write("<h1>download-report</h1>");
     this.model.trigger('download-report', this.model);
   },
 

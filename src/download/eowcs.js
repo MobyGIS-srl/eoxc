@@ -348,7 +348,7 @@ export function downloadFullResolution(layerModel, mapModel, filtersModel, optio
     id += `__${formattedTime}`;
   }
   //////////////////
-  let kvp = getReportKVP(id, requestOptions);
+  let kvp = getCoverageKVP(id, requestOptions);
 
 
   const time = mapModel.get('time');
@@ -398,7 +398,7 @@ export function downloadReport(layerModel, mapModel, filtersModel, options) {
     id += `__${formattedTime}`;
   }
   //////////////////
-  let kvp = getCoverageKVP(id, requestOptions);
+  let kvp = getReportKVP(id, requestOptions);
 
 
   const time = mapModel.get('time');
